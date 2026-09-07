@@ -42,32 +42,32 @@ Run `chmod +x <binary>` if needed, then `<binary> --help` to explore all command
 ```bash
 WESHP=bin/weshp-cli-<platform>   # example path
 
-# 1. Search products
-$WESHLP product search-sku --sku-name "lamp" --format data
+# 1. Search products (--format data gives JSON for parsing; --format table gives a localized, human-readable table)
+$WESHP product search-sku --sku-name "lamp" --format data
 
 # 2. (Optional) use the cart
-$WESHLP cart add --sku-id 1001 --quantity 1
-$WESHLP cart list
+$WESHP cart add --sku-id 1001 --quantity 1
+$WESHP cart list
 
 # 3. Create an order
-$WESHLP order create --email user@example.com \
+$WESHP order create --email user@example.com \
   --receiver-name "Jane Doe" --receiver-phone "+1234567890" \
   --receiver-address "1 Main Street, Springfield" \
   --sku-id 1001 --sku-name "Desk Lamp" --quantity 1 --yes
 
 # 4. Create a payment intent (opens the checkout page in the browser)
-$WESHLP payment create-intent --order-no <orderNo> --email user@example.com \
+$WESHP payment create-intent --order-no <orderNo> --email user@example.com \
   --amount <exact amount literal from the order response> --payment-method PAYPAL --yes
 
 # 5. Check payment status
-$WESHLP payment status --payment-no <paymentNo>
+$WESHP payment status --payment-no <paymentNo>
 ```
 
 ## Command Reference
 
 | Group | Command | Description |
 |---|---|---|
-| product | `product search-sku` | Search SKU stock (fuzzy match by `--sku-name`, paginated) |
+| product | `product search-sku` | Search SKU stock (fuzzy match by `--sku-name`, paginated; `--page-size` up to 100) |
 | cart | `cart add` | Add a SKU to the cart |
 | cart | `cart list` | View the cart |
 | cart | `cart remove` | Remove items from the cart (batch supported) |
@@ -85,7 +85,7 @@ $WESHLP payment status --payment-no <paymentNo>
 |---|---|
 | `--gateway` | Store gateway address (defaults to the built-in test environment) |
 | `--anonymous-id` | Anonymous cart ID (enables per-visitor cart persistence) |
-| `--accept-language` | `Accept-Language` header for i18n of gateway responses (e.g. `en-US`, `zh-CN`, `ja-JP`) |
+| `--accept-language` | `Accept-Language` header for i18n — affects both gateway responses and the CLI's own rendered tables and `--help` output (e.g. `en-US`, `zh-CN`, `ja-JP`) |
 | `--app-id` | App ID required by product APIs |
 | `--format` | Output format: `json` (default) / `data` / `table` |
 | `--timeout` | HTTP timeout in seconds (default 15) |

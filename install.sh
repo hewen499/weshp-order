@@ -23,7 +23,7 @@ else
   TMP_DIR="$(mktemp -d)"
   trap 'rm -rf "${TMP_DIR}"' EXIT
   log "Cloning repository: ${REPO_URL}"
-  git clone --depth 1 "${REPO_URL}" "${TMP_DIR}" 2>/dev/null \
+  git clone --depth 1 "${REPO_URL}" "${TMP_DIR}" \
     || die "Clone failed. Check your network and repository permissions, or specify one: WESHP_REPO_URL=<git-url> bash install.sh"
   SRC_DIR="${TMP_DIR}"
   [ -f "${SRC_DIR}/SKILL.md" ] || SRC_DIR="${TMP_DIR}/skills/${SKILL_NAME}"
