@@ -69,8 +69,8 @@ You can also invoke the skill explicitly with `/weshp-order`.
 
 ## Security Notice
 
-- This skill talks to **real production trade APIs**: ordering creates a real order, and payment results in a real charge. The AI will show you the order summary and confirm with you item by item before placing the order or paying.
-- weshp-cli ships with a default gateway address built in; to connect to a different environment, tell the AI the gateway address in the conversation (passed via `--gateway`).
+- By default, weshp-cli connects to the **Weshp test environment** — orders and payments there are for evaluation only. To connect to another environment (e.g. production, where charges are real), tell the AI the gateway address in the conversation (passed via `--gateway`).
+- The AI will show you the order summary and confirm with you item by item before placing the order or paying.
 - Do not share your shipping or payment details with untrusted session environments; profile files are stored locally on your machine only.
 
 ## Manual Install on Windows

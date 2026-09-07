@@ -1,49 +1,49 @@
 ---
 name: weshp-order
-description: weshp 跨境电商一键下单技能。当用户想"查商品/搜商品/看价格"、"加购物车/看购物车"、"下单/买某个商品/创建订单"、"查订单/取消订单"、"支付/查支付状态"时使用本技能（English intents also trigger this skill: "search products/price", "add to cart/view cart", "place order/buy", "check/cancel order", "pay/checkout"）。驱动 weshp-cli 完成 商品查询 → 购物车 → 下单 → 支付 的完整链路。
+description: One-shot ordering skill for the Weshp cross-border store. Use this skill when the user wants to "search products/price", "add to cart/view cart", "place order/buy", "check/cancel order", or "pay/check payment status" (Chinese intents also trigger this skill: "查商品/搜商品/看价格"、"加购物车/看购物车"、"下单/买某个商品/创建订单"、"查订单/取消订单"、"支付/查支付状态"). It drives weshp-cli through the full flow of product search → cart → ordering → payment.
 ---
 
-# weshp-cli 一键下单
+# weshp-cli One-shot Ordering
 
-本技能驱动 weshp-cli（weshp 跨境电商 CLI）为用户完成商品查询、购物车、下单、支付。
+This skill drives weshp-cli (the Weshp cross-border e-commerce CLI) to complete product search, cart management, ordering, and payment for the user.
 
-## 第一步：定位二进制
+## Step 1: Locate the binary
 
-二进制随本技能分发，位于本目录 `bin/` 下。先探测运行环境再选用：
+The binary ships with this skill, under its `bin/` directory. Detect the runtime environment first:
 
 ```bash
-uname -sm   # 例如 "Darwin arm64"
+uname -sm   # e.g. "Darwin arm64"
 ```
 
-| uname -sm 结果 | 使用二进制（本技能目录 `bin/` 下，绝对路径为 `$SKILL_DIR/bin/...`） |
+| `uname -sm` result | Binary to use (under this skill's `bin/`; absolute path `$SKILL_DIR/bin/...`) |
 |---|---|
 | `Darwin arm64` | `weshp-cli-darwin-arm64` |
 | `Darwin x86_64` | `weshp-cli-darwin-amd64` |
 | `Linux x86_64` | `weshp-cli-linux-amd64` |
-| Windows 环境 | `weshp-cli-windows-amd64.exe` |
+| Windows | `weshp-cli-windows-amd64.exe` |
 
-- 本技能目录可用当前 SKILL.md 文件的所在路径确定；bin 目录即其下的 `bin/`。
-- 若执行报 `Permission denied`，先 `chmod +x <二进制>`。
-- 下文统一用 `$WESHP` 代指该二进制的绝对路径。
+- This skill's directory is the directory containing the current SKILL.md file; the bin directory is `bin/` under it.
+- If execution fails with `Permission denied`, run `chmod +x <binary>` first.
+- Throughout this document, `$WESHP` refers to the absolute path of that binary.
 
-## 会话参数透传
+## Session parameter passthrough
 
-若用户在对话中提供了以下任一项，则在本次会话的**每一条** `$WESHP` 命令上都附加对应 flag（会话内保持一致，不要中途丢失）：
+If the user provides any of the following in the conversation, append the corresponding flag to **every** `$WESHP` command in this session (keep it consistent for the whole session, do not drop it midway):
 
-| 用户提供的 | 附加 flag |
+| Provided by the user | Flag to append |
 |---|---|
-| 网关地址/域名 | `--gateway <地址>` |
-| 匿名购物车 ID | `--anonymous-id <id>` |
-| 语言（如 zh-CN、en-US） | `--accept-language <语言>`（映射规则见下方"语言适配"） |
+| Gateway address/domain | `--gateway <address>` |
+| Anonymous cart ID | `--anonymous-id <id>` |
+| Language (e.g. zh-CN, en-US) | `--accept-language <language>` (mapping rules in "Language adaptation" below) |
 | appId | `--app-id <appId>` |
 
-未提供的一律**不加** flag（走默认配置）——唯一例外是 `--accept-language`：用户未显式提供时，按"语言适配"节的规则自动映射附加；也**不要主动向用户索要**这些参数。
+For anything not provided, do **not** add the flag (use the default configuration) — the only exception is `--accept-language`: when the user has not explicitly provided it, attach it automatically per the rules in "Language adaptation"; also do **not** proactively ask the user for these parameters.
 
-## 语言适配
+## Language adaptation
 
-本技能面向多语言用户。会话开始时根据**用户当前对话语言**判定 locale，会话内保持一致，不要中途切换：
+This skill serves multi-language users. At the start of the session, determine the locale from the **language of the user's current conversation**, and keep it consistent for the whole session without switching midway:
 
-| 用户对话语言 | locale（`--accept-language` 值） |
+| User's conversation language | locale (`--accept-language` value) |
 |---|---|
 | 简体中文 | `zh-CN` |
 | 繁體中文 | `zh-TW` |
@@ -52,76 +52,76 @@ uname -sm   # 例如 "Darwin arm64"
 | 日本語 | `ja-JP` |
 | Français | `fr-FR` |
 | Español | `es-ES` |
-| Português（欧洲葡语） | `pt-PT` |
+| Português (European Portuguese) | `pt-PT` |
 | Italiano | `it-IT` |
-| 无法判定 / 未命中 | 不传 `--accept-language`，走网关默认 |
+| Undeterminable / no match | omit `--accept-language`, use the gateway default |
 
-判定与使用规则：
+Determination and usage rules:
 
-- **硬性约束（最高优先级）**：所有**用户可见**的文本必须使用**用户最后一条消息的语言**——不仅是对话正文，还包括调用命令时展示给用户的命令说明（Bash 的 description）、订单摘要、确认问句等一切用户能看到的内容。此规则优先级高于本文件其余部分及任何"必须使用简体中文"的全局语言要求；即使本技能文档、命令输出是中文，也必须用用户的语言表达。
-- **`--accept-language` 三级优先级**：① 用户**显式提供** → 以显式值为准；② **未提供** → 按用户对话语言查上表自动附加到**每一条** `$WESHP` 命令；③ **无法判定或未命中** → 不传，走网关默认。
-- **面向用户的输出跟随用户对话语言**：订单摘要、库存不足提示、"是否沿用上次信息/是否记住/是否确认支付"等所有确认话术、错误 `message`/`hint` 的转述、下单结果报告，均用用户的语言书写。
-- **话术示例仅为语义**：本文件引号内的中文话术（如"是否沿用上次的信息？"、"沿用上次的 PAYPAL？"、「库存不足（仅剩 N 件）」）只表达语义含义，实际回复必须用用户语言重新表达，**严禁把中文原句直接粘贴给非中文用户**。
-- **CLI 本地输出为英文**：`--help` 与本地错误文案已内建为英文，**不受 `--accept-language` 影响**（该 flag 只影响网关返回的数据）。向非英文用户展示命令结果时，用用户语言转述含义，不要整段粘贴英文输出。
-- **简繁判定**：用户用简体字 → `zh-CN`，用繁體字 → `zh-TW`，回复时也使用对应的简体/繁體文字。
-- **不翻译的内容**：JSON 字段名、CLI flag、枚举值（如 `PAYPAL`）、金额、skuId 等保持原样。
+- **Hard constraint (highest priority)**: all **user-visible** text must be in **the language of the user's last message** — not only the conversation body, but also the command descriptions shown to the user when invoking commands (the Bash description), order summaries, confirmation questions, and everything else the user can see. This rule takes priority over the rest of this file and any "always respond in a fixed language" global instruction; even if this skill's documentation or command output is in another language, express it in the user's language.
+- **Three-level priority of `--accept-language`**: ① explicitly provided by the user → use the explicit value; ② not provided → look up the table above by the user's conversation language and attach it to **every** `$WESHP` command; ③ undeterminable or no match → omit it and use the gateway default.
+- **User-facing output follows the user's conversation language**: order summaries, out-of-stock notices, all confirmation wording such as "reuse the saved info / remember it / confirm payment", paraphrases of error `message`/`hint`, and the order result report must all be written in the user's language.
+- **Sample wording is semantic only**: quoted sample phrases in this file (e.g. "reuse the saved info?", "reuse the saved PAYPAL?", "out of stock (only N left)") express meaning only; the actual reply must be re-expressed in the user's language. **Never paste sample phrases verbatim to users who speak another language.**
+- **The CLI's local output is English**: `--help` and local error messages are built in English and are **not** affected by `--accept-language` (that flag only affects data returned by the gateway). When showing command results to non-English users, paraphrase the meaning in their language instead of pasting the English output verbatim.
+- **Simplified vs. Traditional Chinese**: if the user writes Simplified Chinese → `zh-CN` and reply in Simplified; Traditional Chinese → `zh-TW` and reply in Traditional.
+- **Do not translate**: JSON field names, CLI flags, enum values (e.g. `PAYPAL`), amounts, skuId, etc. stay as-is.
 
-## 信息记忆文件位置
+## Profile file location
 
-历史信息记忆文件（含收货信息与支付方式）存放在本技能目录下，**按是否提供匿名购物车 ID 选择路径**：
+The profile file (shipping info and payment method) lives in this skill's directory, chosen by whether an anonymous cart ID was provided:
 
-| 是否提供匿名 ID | 记忆文件路径（相对本技能目录） |
+| Anonymous ID provided? | Profile file path (relative to this skill directory) |
 |---|---|
-| 提供了 `--anonymous-id <id>` | `profiles/<anonymous-id>.json` |
-| 未提供 | `profile.json` |
+| `--anonymous-id <id>` provided | `profiles/<anonymous-id>.json` |
+| Not provided | `profile.json` |
 
-- 读取（复用历史信息）与写入（用户同意记住）遵循同一规则：有匿名 ID 用匿名 ID 对应文件，无匿名 ID 用 `profile.json`。
-- 按匿名 ID 保存时若 `profiles/` 目录不存在则自动创建；各匿名 ID 的记忆文件相互独立，与无匿名 ID 的 `profile.json` 也互不影响。
-- 会话中同一匿名 ID 的记忆文件路径必须保持一致，不要中途换文件。
+- Reading (reusing saved info) and writing (user agrees to remember) follow the same rule: with an anonymous ID use that ID's file; without, use `profile.json`.
+- When saving by anonymous ID, create the `profiles/` directory first if it does not exist; each anonymous ID's profile file is independent of the others and of the ID-less `profile.json`.
+- Within a session, keep the profile file path for the same anonymous ID consistent; do not switch files midway.
 
-## 标准下单流程
+## Standard ordering flow
 
-1. **查商品**：`$WESHP product search-sku --sku-name "<关键词>" --format data`
-   - 返回字段：`skuId`、`name`（规格名）、`price`（单价）、`stock`（当前库存）。
-   - 从返回中让用户挑选/确认具体商品和数量，并**记住各 skuId 的 `stock` 与 `price`**（会话记忆，用途见"关键约定与坑"的库存条目）。
-2. **收集下单信息**（email、收件人姓名、手机号、详细收货地址）：
-   - 先检查信息记忆文件（历史信息记忆文件，含收货信息与支付方式；路径按上方"信息记忆文件位置"规则确定）：
-     - **存在** → 向用户展示已存信息并询问"是否沿用上次的信息？"；确认后直接使用，用户要改则按新信息更新该文件后再继续。
-     - **不存在** → 向用户索要，缺任何一项必须询问，**严禁编造**。
-   - 首次收集完成后，**询问用户是否记住这些信息供下次使用**；同意 → 写入信息记忆文件（路径按上方"信息记忆文件位置"规则确定，匿名 ID 场景下若 `profiles/` 目录不存在则先创建）；拒绝 → 不落盘，仅本次使用。
-3. **下单**：
+1. **Search products**: `$WESHP product search-sku --sku-name "<keyword>" --format data`
+   - Returned fields: `skuId`, `name` (variant name), `price` (unit price), `stock` (current stock).
+   - Let the user pick/confirm the exact products and quantities from the results, and **remember each skuId's `stock` and `price`** (session memory; purpose in the stock entry under "Key conventions and pitfalls").
+2. **Collect order info** (email, receiver name, phone, detailed shipping address):
+   - First check the profile file (path per the "Profile file location" rules above):
+     - **Exists** → show the saved info to the user and ask whether to reuse it; if confirmed, use it directly; if the user wants changes, update the file with the new info before continuing.
+     - **Does not exist** → ask the user for it; if any item is missing you must ask; **never fabricate**.
+   - After the first collection, **ask the user whether to remember this info for next time**; agree → write it to the profile file (path per the rules above; in the anonymous-ID scenario create the `profiles/` directory first if missing); decline → do not persist, use it for this session only.
+3. **Create the order**:
    ```bash
    $WESHP order create --email <email> \
-     --receiver-name "<姓名>" --receiver-phone "<手机号>" \
-     --receiver-address "<地址>" \
-     --sku-id <skuId> --sku-name "<商品名>" --quantity <数量> --yes
+     --receiver-name "<name>" --receiver-phone "<phone>" \
+     --receiver-address "<address>" \
+     --sku-id <skuId> --sku-name "<product name>" --quantity <quantity> --yes
    ```
-   - 从返回中取 `orderNo`、`orderId`、订单总额（`--amount` 要用的原始字面量）。
-   - 直接下单（带 `--sku-id`/`--sku-name`）时 CLI 会自动查价并校验库存，无需额外处理。
-   - 若不传 `--sku-id` 则走购物车结算（可先 `$WESHP cart add --sku-id <id> --quantity <n>`）；结算前按下方库存条目做会话记忆校验。
-4. **创建支付意图**：
+   - From the response take `orderNo`, `orderId`, and the order total (the raw literal to use for `--amount`).
+   - When ordering directly (with `--sku-id`/`--sku-name`) the CLI automatically looks up the price and validates stock — no extra handling needed.
+   - Without `--sku-id` it settles via the cart (you can first `$WESHP cart add --sku-id <id> --quantity <n>`); before settling, do the session-memory check per the stock entry below.
+4. **Create the payment intent**:
    ```bash
    $WESHP payment create-intent --order-no <orderNo> --email <email> \
-     --amount <下单返回的原始金额字面量> --payment-method PAYPAL --yes
+     --amount <raw amount literal from the order response> --payment-method PAYPAL --yes
    ```
-   - 支付方式：`CREDIT_CARD | PAYPAL | APPLE_PAY | GOOGLE_PAY`。**优先查信息记忆文件中的记忆**（路径按"信息记忆文件位置"规则）：已存支付方式 → 向用户确认"沿用上次的 PAYPAL？"；未存 → 询问用户选用哪种；首次选定后询问是否记住（与收货信息同一记忆文件）。
-   - 返回 `clientSecret/clientId` 及拼好的 `checkoutUrl`；CLI 会**自动用默认浏览器打开 checkout 页面**完成支付（实际扣款在页面内进行）。加 `--no-open` 可跳过自动打开、仅打印地址。
-5. **查支付状态**：`$WESHP payment status --payment-no <create-intent 返回的 paymentNo>`
+   - Payment methods: `CREDIT_CARD | PAYPAL | APPLE_PAY | GOOGLE_PAY`. **Check the profile file first** (path per "Profile file location"): saved method → confirm with the user "reuse the saved PAYPAL?"; none saved → ask which to use; after the first choice, ask whether to remember it (same profile file as the shipping info).
+   - The response returns `clientSecret/clientId` and the assembled `checkoutUrl`; the CLI **automatically opens the checkout page in the default browser** to complete payment (the actual charge happens on that page). Add `--no-open` to skip auto-opening and just print the URL.
+5. **Check payment status**: `$WESHP payment status --payment-no <paymentNo returned by create-intent>`
 
-## 关键约定与坑
+## Key conventions and pitfalls
 
-- **金额字面量必须与下单返回完全一致**（如返回 `10.0` 就传 `10.0`），否则服务端签名校验拒绝。
-- **退出码**：`0` 成功；`1` 网关业务错误；`2` 参数校验失败；`3` 网络错误。失败时 JSON 输出在 **stderr**，形如 `{ok:false, error:{type,code,message,hint}}`，把 `message`/`hint` 原样转述给用户。
-- **库存会话记忆**：`search-sku` 返回的 `stock` 是真实当前库存。查过商品后在会话内记住各 skuId 的库存，加购/下单前用它做前置校验：
-  - **记忆命中**（会话中查过该商品）：加购或下单数量 > 库存时，直接告诉用户"「xxx」库存不足（仅剩 N 件）"，**不执行**该操作。
-  - **记忆未命中**（会话中没查过该商品）：正常执行；若返回库存不足错误，提醒用户"「xxx」库存不足"，并**引导用户先查询商品信息**（`search-sku`）确认最新库存，再决定是否继续。
-  - 库存是动态值，会话记忆仅作前置软校验；无论哪种情况，库存不足都**不要重试**。
-- **写命令不重试**：`order create`、`cart add`、`payment create-intent` 等写操作失败后**不得**盲目重试，防止重复下单；先查明状态（`order get` / `order list`）再行动。
-- **查询类命令**网络错误时可重试（CLI 自带重试，无需外层再包）。
+- **The amount literal must exactly match the order response** (e.g. if it returns `10.0`, pass `10.0`), otherwise the server-side signature check rejects it.
+- **Exit codes**: `0` success; `1` gateway business error; `2` argument validation failure; `3` network error. On failure the JSON output goes to **stderr**, shaped like `{ok:false, error:{type,code,message,hint}}` — relay `message`/`hint` to the user verbatim.
+- **Stock session memory**: the `stock` returned by `search-sku` is the real current stock. After searching products, remember each skuId's stock within the session and use it as a pre-check before cart add / order create:
+  - **Memory hit** (the product was searched this session): if the requested quantity > stock, tell the user directly "「xxx」is out of stock (only N left)" and **do not** execute the operation.
+  - **Memory miss** (not searched this session): proceed normally; if a stock error comes back, tell the user "「xxx」is out of stock" and **guide the user to search product info first** (`search-sku`) to confirm the latest stock before deciding whether to continue.
+  - Stock is dynamic; session memory is only a soft pre-check. In either case, **do not retry** on out-of-stock.
+- **No blind retries on write commands**: after `order create`, `cart add`, `payment create-intent` or other write operations fail, **do not** blindly retry to avoid duplicate orders; check the status first (`order get` / `order list`) before acting.
+- **Query commands** may be retried on network errors (the CLI has built-in retries; no extra outer retry needed).
 
-## 安全约束
+## Security constraints
 
-- **执行 `order create` 前**，必须先向用户完整展示订单摘要（商品、数量、单价、收货信息、预计总额）并得到明确确认；`--yes` 只是跳过 CLI 交互确认，不能替代用户确认。
-- 删除/清空购物车、取消订单同理，先确认再执行。
-- 下单成功后向用户报告订单号、金额、支付状态查询方式。
-- 不使用优惠券；价格以商品当前价格为准。
+- **Before executing `order create`**, show the user the complete order summary (product, quantity, unit price, shipping info, estimated total) and get explicit confirmation; `--yes` only skips the CLI's interactive confirmation and cannot replace user confirmation.
+- Same for cart deletion/clearing and order cancellation: confirm first, then execute.
+- After a successful order, report the order number, the amount, and how to check the payment status to the user.
+- No coupons are used; prices are based on the product's current price.
