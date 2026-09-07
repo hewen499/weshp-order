@@ -62,7 +62,7 @@ Determination and usage rules:
 - **Three-level priority of `--accept-language`**: ① explicitly provided by the user → use the explicit value; ② not provided → look up the table above by the user's conversation language and attach it to **every** `$WESHP` command; ③ undeterminable or no match → omit it and use the gateway default.
 - **User-facing output follows the user's conversation language**: order summaries, out-of-stock notices, all confirmation wording such as "reuse the saved info / remember it / confirm payment", paraphrases of error `message`/`hint`, and the order result report must all be written in the user's language.
 - **Sample wording is semantic only**: quoted sample phrases in this file (e.g. "reuse the saved info?", "reuse the saved PAYPAL?", "out of stock (only N left)") express meaning only; the actual reply must be re-expressed in the user's language. **Never paste sample phrases verbatim to users who speak another language.**
-- **The CLI's local output is English**: `--help` and local error messages are built in English and are **not** affected by `--accept-language` (that flag only affects data returned by the gateway). When showing command results to non-English users, paraphrase the meaning in their language instead of pasting the English output verbatim.
+- **Scope of `--accept-language` on local output**: table rendering text (headers, footers, order summary/shipping lines) and `--help`/usage text (command descriptions, flag descriptions, template labels) ARE localized via `--accept-language` (since 2026-09-07, see CLI `internal/i18n`), so `--format table` and `--help` output can be passed through verbatim to the user. Local error messages (e.g. `Error:`, `Cancelled`) remain built-in English — when showing those to non-English users, paraphrase the meaning in their language instead of pasting them verbatim.
 - **Simplified vs. Traditional Chinese**: if the user writes Simplified Chinese → `zh-CN` and reply in Simplified; Traditional Chinese → `zh-TW` and reply in Traditional.
 - **Do not translate**: JSON field names, CLI flags, enum values (e.g. `PAYPAL`), amounts, skuId, etc. stay as-is.
 
@@ -81,8 +81,9 @@ The profile file (shipping info and payment method) lives in this skill's direct
 
 ## Standard ordering flow
 
-1. **Search products**: `$WESHP product search-sku --sku-name "<keyword>" --format data`
-   - Returned fields: `skuId`, `name` (variant name), `price` (unit price), `stock` (current stock).
+1. **Search products**: `$WESHP product search-sku --sku-name "<keyword>" --format table`
+   - Columns: `skuId`, `name` (variant name), `price` (unit price), `stock` (current stock; `⚠` marks out-of-stock).
+   - The table footer shows the total count and current page/size. If `total` exceeds the current page, fetch the remaining pages with `--page-num` (to list all products at once, use `--page-size 100`, the max).
    - Let the user pick/confirm the exact products and quantities from the results, and **remember each skuId's `stock` and `price`** (session memory; purpose in the stock entry under "Key conventions and pitfalls").
 2. **Collect order info** (email, receiver name, phone, detailed shipping address):
    - First check the profile file (path per the "Profile file location" rules above):
@@ -102,11 +103,24 @@ The profile file (shipping info and payment method) lives in this skill's direct
 4. **Create the payment intent**:
    ```bash
    $WESHP payment create-intent --order-no <orderNo> --email <email> \
-     --amount <raw amount literal from the order response> --payment-method PAYPAL --yes
+     --amount <raw amount literal from the order response> --payment-method <method> --yes
    ```
    - Payment methods: `CREDIT_CARD | PAYPAL | APPLE_PAY | GOOGLE_PAY`. **Check the profile file first** (path per "Profile file location"): saved method → confirm with the user "reuse the saved PAYPAL?"; none saved → ask which to use; after the first choice, ask whether to remember it (same profile file as the shipping info).
    - The response returns `clientSecret/clientId` and the assembled `checkoutUrl`; the CLI **automatically opens the checkout page in the default browser** to complete payment (the actual charge happens on that page). Add `--no-open` to skip auto-opening and just print the URL.
 5. **Check payment status**: `$WESHP payment status --payment-no <paymentNo returned by create-intent>`
+
+## Table presentation
+
+When showing tabular data to the user **in the conversation** (search results, cart contents, order lists), do **NOT** render tables yourself — run the CLI command with `--format table` and pass its box-drawing output through to the user verbatim. Never write an external rendering script (Python/awk/Go/…) to build a table, and never use Markdown tables — they align by character count and CJK cells break the borders. If several pages need merging, summarize the extra information in plain text next to the CLI output instead of re-drawing the table.
+
+**Sole exception — order confirmation summary** (before `order create`, required by "Security constraints"; in this non-interactive flow `--yes` is always passed and the CLI's own interactive confirmation summary is unreachable, so the conversation must show it): hand-render one box-drawing table row per item — `name | quantity | unitPrice | subtotal` — with a final row for the estimated total, inside a ```text code block, and show the shipping info (email, receiver, phone, address) as a short list directly below the table. Use the `price`/`stock` remembered from the search step for unit price and the stock pre-check.
+
+Rendering rules (apply to the exception above only):
+
+- Layout: `┌─┬┐` top border, `├─┼─┤` separator between **every** row, `└─┴┘` bottom border.
+- Column widths are computed by **display width**: CJK/full-width characters count 2, box-drawing border characters count 2, ASCII counts 1, `⚠` counts 2 (confirmed to render 2 columns wide on the user's macOS terminal).
+- Alignment: headers centered, text columns left-aligned, numeric columns right-aligned; every cell gets 1 space of padding on each side.
+- Long values that would blow up the layout (image URLs etc.) are omitted, not truncated.
 
 ## Key conventions and pitfalls
 
