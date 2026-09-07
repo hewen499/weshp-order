@@ -53,7 +53,29 @@ if [ "$(uname)" = "Darwin" ] && command -v xattr >/dev/null 2>&1; then
   xattr -dr com.apple.quarantine "${TARGET_DIR}" 2>/dev/null || true
 fi
 
-# ---------- 4. Verify the installation ----------
+# ---------- 4. Register for Codex CLI ----------
+# Codex follows the same open skills standard; its user-level directory is
+# ~/.agents/skills (symlinked skill folders are officially supported).
+AGENTS_PARENT="${HOME}/.agents/skills"
+AGENTS_DIR="${AGENTS_PARENT}/${SKILL_NAME}"
+if mkdir -p "${AGENTS_PARENT}" 2>/dev/null; then
+  if [ -L "${AGENTS_DIR}" ]; then
+    ln -sfn "${TARGET_DIR}" "${AGENTS_DIR}"
+    log "Codex CLI: updated symlink ${AGENTS_DIR} -> ${TARGET_DIR}"
+  elif [ -e "${AGENTS_DIR}" ]; then
+    log "Codex CLI: ${AGENTS_DIR} already exists as a real directory, skipped (link it manually if needed)"
+  elif ln -s "${TARGET_DIR}" "${AGENTS_DIR}" 2>/dev/null && [ -L "${AGENTS_DIR}" ]; then
+    log "Codex CLI: linked ${AGENTS_DIR} -> ${TARGET_DIR}"
+  else
+    rm -rf "${AGENTS_DIR}"   # Git Bash's ln -s may leave a deep copy behind
+    cp -R "${TARGET_DIR}" "${AGENTS_DIR}"
+    log "Codex CLI: copied skill to ${AGENTS_DIR} (symlinks unavailable; re-run this script to refresh)"
+  fi
+else
+  log "Codex CLI: could not create ${AGENTS_PARENT}, skipped"
+fi
+
+# ---------- 5. Verify the installation ----------
 if "${TARGET_DIR}/bin/${BIN}" --help >/dev/null 2>&1; then
   log "Install/update completed: ${TARGET_DIR}"
   log "Restart your Claude Code session, then invoke the skill with /weshp-order."

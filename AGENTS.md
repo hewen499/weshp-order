@@ -9,14 +9,14 @@ The agent-facing interface is **weshp-cli**, a command-line tool bundled in this
 
 ## Getting Started
 
-### Option 1: Install the Claude Code skill (recommended)
+### Option 1: Install the skill (Claude Code and Codex CLI, recommended)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hewen499/weshp-order/main/install.sh -o /tmp/weshp-install.sh
 bash /tmp/weshp-install.sh
 ```
 
-Then restart the Claude Code session. The skill provides the agent with the full ordering workflow, multi-language handling, and safety checks on every write operation.
+The script installs the skill for Claude Code (`~/.claude/skills/weshp-order`) and links it for Codex CLI (`~/.agents/skills/weshp-order`, same open skills standard). Then restart the session. The skill provides the agent with the full ordering workflow, multi-language handling, and safety checks on every write operation.
 
 ### Option 2: Drive the CLI directly
 

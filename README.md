@@ -40,7 +40,8 @@ The script will:
 1. Detect your platform (`Darwin arm64` / `Darwin x86_64` / `Linux x86_64` / Windows Git Bash) and enable only the matching binary;
 2. Install the skill into `~/.claude/skills/weshp-order/`;
 3. On macOS, automatically remove the Gatekeeper quarantine attribute (`com.apple.quarantine`) from the downloaded files;
-4. Verify the installation by running `--help`.
+4. Register the skill for [Codex CLI](https://developers.openai.com/codex) as well: it uses the same open skills standard and reads user-level skills from `~/.agents/skills`, so the script links `~/.agents/skills/weshp-order` to the Claude install (falls back to a copy on systems without symlinks);
+5. Verify the installation by running `--help`.
 
 ## Update
 
@@ -68,6 +69,12 @@ After installing, **restart your Claude Code session**, then simply talk in natu
 - "Check the payment status of order xxx"
 
 You can also invoke the skill explicitly with `/weshp-order`.
+
+### Using with Codex CLI
+
+[Codex CLI](https://developers.openai.com/codex) follows the same [open agent skills standard](https://agentskills.io), so the skill installed by this script works there too — no extra steps. In Codex, mention it with `$weshp-order` or via `/skills`; Codex also picks it up automatically when your request matches the skill description.
+
+> If you installed before this was supported, re-run the install script once to create the `~/.agents/skills` link.
 
 ## Security Notice
 
