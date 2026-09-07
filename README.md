@@ -9,6 +9,8 @@ The skill consists of two parts:
 | `SKILL.md` | Skill instructions that guide the AI to call the CLI tool following a standardized flow |
 | `bin/` | The weshp-cli command-line tool (multi-platform binaries, bundled with the skill) |
 
+> Building your own agent (not Claude Code)? See [AGENTS.md](AGENTS.md) — the canonical agent-facing guide for driving weshp-cli directly.
+
 ## Prerequisites
 
 - Claude Code installed (CLI or IDE plugin)
