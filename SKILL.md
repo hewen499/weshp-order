@@ -1,6 +1,6 @@
 ---
 name: weshp-order
-description: One-shot ordering skill for the Weshp cross-border store. Use this skill when the user wants to "search products/price", "add to cart/view cart", "place order/buy", "check/cancel order", or "pay/check payment status" (Chinese intents also trigger this skill: "查商品/搜商品/看价格"、"加购物车/看购物车"、"下单/买某个商品/创建订单"、"查订单/取消订单"、"支付/查支付状态"). It drives weshp-cli through the full flow of product search → cart → ordering → payment.
+description: 'One-shot ordering skill for the Weshp cross-border store. Use this skill when the user wants to "search products/price", "add to cart/view cart", "place order/buy", "check/cancel order", or "pay/check payment status" (Chinese intents also trigger this skill: "查商品/搜商品/看价格"、"加购物车/看购物车"、"下单/买某个商品/创建订单"、"查订单/取消订单"、"支付/查支付状态"). It drives weshp-cli through the full flow of product search → cart → ordering → payment.'
 ---
 
 # weshp-cli One-shot Ordering
