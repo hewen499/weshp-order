@@ -14,7 +14,7 @@ The skill consists of two parts:
 ## Prerequisites
 
 - Claude Code installed (CLI or IDE plugin)
-- macOS (Apple Silicon / Intel) or Linux x86_64; for Windows see "Manual Install on Windows" at the end
+- macOS (Apple Silicon / Intel), Linux x86_64, or Windows (via Git Bash — see the Windows section below)
 
 ## Install
 
@@ -37,7 +37,7 @@ bash install.sh
 
 The script will:
 
-1. Detect your platform (`Darwin arm64` / `Darwin x86_64` / `Linux x86_64`) and enable only the matching binary;
+1. Detect your platform (`Darwin arm64` / `Darwin x86_64` / `Linux x86_64` / Windows Git Bash) and enable only the matching binary;
 2. Install the skill into `~/.claude/skills/weshp-order/`;
 3. On macOS, automatically remove the Gatekeeper quarantine attribute (`com.apple.quarantine`) from the downloaded files;
 4. Verify the installation by running `--help`.
@@ -75,8 +75,21 @@ You can also invoke the skill explicitly with `/weshp-order`.
 - The AI will show you the order summary and confirm with you item by item before placing the order or paying.
 - Do not share your shipping or payment details with untrusted session environments; profile files are stored locally on your machine only.
 
-## Manual Install on Windows
+## Windows
+
+### With Git Bash (recommended)
+
+Git Bash ships with [Git for Windows](https://gitforwindows.org). In a Git Bash terminal, run the same one-liner as macOS/Linux:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hewen499/weshp-order/main/install.sh -o /tmp/weshp-install.sh
+bash /tmp/weshp-install.sh
+```
+
+The script detects Windows (Git Bash) automatically, installs the skill to `%USERPROFILE%\.claude\skills\weshp-order`, and verifies the binary.
+
+### Without Git Bash (manual install)
 
 1. Clone the repository: `git clone --depth 1 https://github.com/hewen499/weshp-order.git`
-2. Copy the whole `skills/weshp-order` directory to `%USERPROFILE%\.claude\skills\weshp-order`
+2. Copy the repository contents (`SKILL.md`, `README.md`, `bin/`) to `%USERPROFILE%\.claude\skills\weshp-order`
 3. Restart your Claude Code session (the Windows binary `bin/weshp-cli-windows-amd64.exe` does not need chmod)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# weshp-order skill install/update script (macOS / Linux)
+# weshp-order skill install/update script (macOS / Linux / Windows via Git Bash)
 #
 # Usage:
 #   1. Install from the remote repository: bash install.sh   (clones automatically when not run inside a repo)
@@ -35,7 +35,8 @@ case "$(uname -sm)" in
   "Darwin arm64")   BIN="weshp-cli-darwin-arm64" ;;
   "Darwin x86_64")  BIN="weshp-cli-darwin-amd64" ;;
   "Linux x86_64")   BIN="weshp-cli-linux-amd64" ;;
-  *) die "Unsupported platform: $(uname -sm) (see README.md for manual installation on Windows)" ;;
+  MINGW*|MSYS*)     BIN="weshp-cli-windows-amd64.exe" ;;  # Git Bash on Windows
+  *) die "Unsupported platform: $(uname -sm) (see README.md for manual installation)" ;;
 esac
 
 # ---------- 3. Install files (overwriting update; user profile files profile.json / profiles/ are preserved) ----------
