@@ -78,7 +78,7 @@ You can also invoke the skill explicitly with `/weshp-order`.
 
 ## Security Notice
 
-- By default, weshp-cli connects to the **Weshp test environment** — orders and payments there are for evaluation only. To connect to another environment (e.g. production, where charges are real), tell the AI the gateway address in the conversation (passed via `--gateway`).
+- By default, weshp-cli connects to the **Weshp production environment** (`https://weshv.com/store`) — orders and payments there are **real and charged**. For evaluation only, ask the AI to switch to the test environment (e.g. say "use the test environment" / 测试环境), which is passed via `--env test` (gateway `https://test.weshv.com/store`). Direct gateway address overrides are no longer supported.
 - The AI will show you the order summary and confirm with you item by item before placing the order or paying.
 - Do not share your shipping or payment details with untrusted session environments; profile files are stored locally on your machine only.
 

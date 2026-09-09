@@ -83,7 +83,7 @@ $WESHP payment status --payment-no <paymentNo>
 
 | Flag | Description |
 |---|---|
-| `--gateway` | Store gateway address (defaults to the built-in test environment) |
+| `--env` | Runtime environment: `prod` (default, real charges) / `test` (evaluation) |
 | `--anonymous-id` | Anonymous cart ID (enables per-visitor cart persistence) |
 | `--accept-language` | `Accept-Language` header for i18n — affects both gateway responses and the CLI's own rendered tables and `--help` output (e.g. `en-US`, `zh-CN`, `ja-JP`) |
 | `--app-id` | App ID required by product APIs |
@@ -102,8 +102,15 @@ $WESHP payment status --payment-no <paymentNo>
 
 ## Environment
 
-- By default, weshp-cli connects to the **Weshp test environment** — orders and payments there are for evaluation only.
-- To connect to another environment (e.g. production, where charges are real), pass `--gateway <address>` on every command.
+- weshp-cli selects the environment via `--env` and connects to the **Weshp production environment by default** — orders and payments there are **real and charged**.
+- For evaluation only, pass `--env test` on every command.
+
+| Environment | Gateway | Checkout page (payment intent) |
+|---|---|---|
+| `prod` (default) | `https://weshv.com/store` | `https://checkout.airwallex.com/#/standalone/checkout` |
+| `test` | `https://test.weshv.com/store` | `https://checkout-demo.airwallex.com/#/standalone/checkout` |
+
+- Direct gateway address overrides (`--gateway` / `WESHP_GATEWAY`) are no longer supported — switch environments only via `--env`.
 
 ## Agent Discovery
 

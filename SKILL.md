@@ -32,12 +32,24 @@ If the user provides any of the following in the conversation, append the corres
 
 | Provided by the user | Flag to append |
 |---|---|
-| Gateway address/domain | `--gateway <address>` |
+| Environment (e.g. 测试环境/test environment) | `--env test` (use `--env prod` only if the user explicitly says 生产环境/production) |
 | Anonymous cart ID | `--anonymous-id <id>` |
 | Language (e.g. zh-CN, en-US) | `--accept-language <language>` (mapping rules in "Language adaptation" below) |
 | appId | `--app-id <appId>` |
 
 For anything not provided, do **not** add the flag (use the default configuration) — the only exception is `--accept-language`: when the user has not explicitly provided it, attach it automatically per the rules in "Language adaptation"; also do **not** proactively ask the user for these parameters.
+
+## Environment
+
+The CLI selects the environment via `--env` and connects to the **production environment by default**:
+
+| Environment | Gateway | Checkout page (payment intent) |
+|---|---|---|
+| `prod` (default) | `https://weshv.com/store` | `https://checkout.airwallex.com/#/standalone/checkout` |
+| `test` | `https://test.weshv.com/store` | `https://checkout-demo.airwallex.com/#/standalone/checkout` |
+
+- **Production is where real charges happen.** Before running any write command (`order create`, `payment create-intent`, …) in the default (prod) environment, make sure the user is aware the order and payment are real; the "Security constraints" confirmation must state which environment the command will hit.
+- Direct gateway address overrides (`--gateway` / `WESHP_GATEWAY`) are no longer supported — switch environments only via `--env`.
 
 ## Language adaptation
 
