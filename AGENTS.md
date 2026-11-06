@@ -34,7 +34,7 @@ Run `chmod +x <binary>` if needed, then `<binary> --help` to explore all command
 ## Typical Agent Flow
 
 1. **Search** — find products and confirm price and stock
-2. **Collect order info** — email, receiver name, phone, shipping address (ask the user; never fabricate)
+2. **Collect order info** — email, receiver name, phone, structured shipping address (country/city/zip required, state for US/AU/CA, street+number only; ask the user; never fabricate)
 3. **Order** — create the order (directly or via the cart)
 4. **Pay** — create a payment intent and complete payment on the checkout page
 5. **Confirm** — check the payment status
@@ -42,17 +42,22 @@ Run `chmod +x <binary>` if needed, then `<binary> --help` to explore all command
 ```bash
 WESHP=bin/weshp-cli-<platform>   # example path
 
-# 1. Search products (--format data gives JSON for parsing; --format table gives a localized, human-readable table)
+# 1. Search products (JSON output only; --format data gives the raw data payload for parsing)
 $WESHP product search-sku --sku-name "lamp" --format data
 
 # 2. (Optional) use the cart
 $WESHP cart add --sku-id 1001 --quantity 1
 $WESHP cart list
 
-# 3. Create an order
+# 3. Create an order (structured receiver info: country/city/zip required,
+#    state only for US/AU/CA; --receiver-first-name/--receiver-last-name preferred,
+#    --receiver-name "<full name>" also works)
 $WESHP order create --email user@example.com \
-  --receiver-name "Jane Doe" --receiver-phone "+1234567890" \
-  --receiver-address "1 Main Street, Springfield" \
+  --receiver-first-name "Jane" --receiver-last-name "Doe" \
+  --receiver-phone "+123****7890" \
+  --receiver-address "1 Main Street" \
+  --receiver-country "US" --receiver-state "IL" \
+  --receiver-city "Springfield" --receiver-zip-code "62701" \
   --sku-id 1001 --sku-name "Desk Lamp" --quantity 1 --yes
 
 # 4. Create a payment intent (opens the checkout page in the browser)
